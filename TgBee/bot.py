@@ -3,7 +3,8 @@ import aiohttp
 import importlib
 import os
 import json
-
+import threading
+from concurrent.futures import ThreadPoolExecutor
 from typing import List, Optional, Callable, Any, Dict
 from .types import Update, User, Message, CallbackQuery
 from .methods import Methods
@@ -29,6 +30,7 @@ class Bot(Methods):
             self.session = None
             self.me = None
             self.initialized = True
+            self.thread_pool = ThreadPoolExecutor(max_workers=10)
 
     @classmethod
     def get_current(cls):
@@ -71,14 +73,19 @@ class Bot(Methods):
             except Exception as e:
                 print(f"Error in handler {handler}: {e}")
 
+    def _process_update_thread(self, update: Dict[str, Any]):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        update_obj = Update.from_dict(update)
+        loop.run_until_complete(self.process_update(update_obj))
+
     async def start_polling(self):
         offset = 0
         while True:
             try:
                 updates = await self.get_updates(offset=offset, timeout=30)
                 for update in updates:
-                    update_obj = Update.from_dict(update)
-                    asyncio.create_task(self.process_update(update_obj))
+                    self.thread_pool.submit(self._process_update_thread, update)
                     offset = update['update_id'] + 1
             except aiohttp.ClientError as e:
                 print(f"Connection error while polling: {e}")
@@ -102,6 +109,7 @@ class Bot(Methods):
         except KeyboardInterrupt:
             pass
         finally:
+            self.thread_pool.shutdown(wait=True)
             loop.close()
 
     def load_plugins(self, plugins_dir: str):
@@ -117,6 +125,13 @@ class Bot(Methods):
                     if callable(obj) and hasattr(obj, "_handler"):
                         self.handlers.append(obj._handler)
 
+    # New method to allow both syntaxes
+    def send_message(self, chat_id=None, text=None, **kwargs):
+        if chat_id is None and 'chat_id' in kwargs:
+            chat_id = kwargs.pop('chat_id')
+        if text is None and 'text' in kwargs:
+            text = kwargs.pop('text')
+        return super().send_message(chat_id=chat_id, text=text, **kwargs)
 
 class Handler:
     def __init__(self, callback: Callable, filters=None, update_type=None):
