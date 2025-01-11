@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name="TgBee",
-    version="0.1.0",
+    version="0.1.1",
     author="Ahmed Negm",
     author_email="a7mednegm.x@gmail.com",
     description="An asynchronous Python Telegram Bot API wrapper",
