@@ -22,11 +22,9 @@ pip3 install -U TgBee
 ```python
 import asyncio
 from TgBee import Client, filters
+from pytelebot.bot import SkipHandler
 
-bot = Client(
-    bot_token = "YOUR_BOT_TOKEN",
-    plugins_dir = "source/plugins"
-)
+bot = Client(token="YOUR_BOT_TOKEN")
 
 @bot.on_message(filters.command("start"))
 async def start_command(client, message):
@@ -47,7 +45,20 @@ async def start_command(client, message):
         reply_markup=reply_markup
     )
 
-if __name__ == "__main__":
-    asyncio.run(main())
+@bot.on_callback_query()
+async def handle_callback(client, callback_query):
+    callback_query_id = callback_query.id
+    data = callback_query.data
 
-```
+    if data == "button1":
+        await client.answer_callback_query(callback_query_id=callback_query_id, text="You pressed Button 1!", show_alert=True)
+    elif data == "button2":
+        await client.answer_callback_query(callback_query_id=callback_query_id, text="You pressed Button 2!", show_alert=True)
+    else:
+        await client.answer_callback_query(callback_query_id=callback_query_id, text="Unknown button pressed", show_alert=True)
+
+async def main():
+    await bot.run()
+
+if __name__ == "__main__":
+    asyncio.run(main())```
