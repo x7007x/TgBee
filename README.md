@@ -14,7 +14,7 @@ TgBee is an asynchronous Python wrapper for the Telegram Bot API. It provides a 
 
 You can install TgBee using pip: 
 ```bash
-pip3 install TgBee
+pip3 install -U TgBee
 ```
 
 ## Example
