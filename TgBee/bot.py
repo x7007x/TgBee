@@ -2,40 +2,50 @@ import asyncio
 import aiohttp
 import importlib
 import os
-import json
+import logging
 from typing import List, Optional, Callable, Any, Dict
 from .types import Update, User, Message, CallbackQuery
 from .methods import Methods
-from .filters import Filters
+
+logger = logging.getLogger(__name__)
 
 class SkipHandler(Exception):
     pass
 
-class Bot(Methods):
+class Client:
     _instance = None
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs):
         if cls._instance is None:
-            cls._instance = super(Bot, cls).__new__(cls)
+            cls._instance = super(Client, cls).__new__(cls)
             cls._instance.initialized = False
         return cls._instance
 
-    def __init__(self):
-        if not self.initialized:
-            super().__init__()
-            self.token = None
-            self.handlers = []
-            self.session = None
-            self.me = None
-            self.initialized = True
+    def __init__(self, token: str = None, plugins_dir: str = None):
+        self.token = token
+        self.plugins_dir = plugins_dir
+        self.handlers = []
+        self.session = None
+        self.me = None
+        self.methods = Methods()
+        if self.token:
+            self.methods.set_token(self.token)
+        if self.plugins_dir:
+            self.load_plugins(self.plugins_dir)
 
     @classmethod
     def get_current(cls):
         return cls._instance
 
-    def set_token(self, token: str):
-        self.token = token
-        self.base_url = f"https://api.telegram.org/bot{token}/"
+    def __getattr__(self, name):
+        return getattr(self.methods, name)
+
+    def on_message(self, filters=None):
+        def decorator(func):
+            handler = Handler(func, filters, update_type='message')
+            self.handlers.append(handler)
+            return func
+        return decorator
 
     def on_update(self, update_type: str, filters=None):
         def decorator(func):
@@ -44,7 +54,6 @@ class Bot(Methods):
             return func
         return decorator
 
-    on_message = lambda self, filters=None: self.on_update('message', filters)
     on_edited_message = lambda self, filters=None: self.on_update('edited_message', filters)
     on_channel_post = lambda self, filters=None: self.on_update('channel_post', filters)
     on_edited_channel_post = lambda self, filters=None: self.on_update('edited_channel_post', filters)
@@ -60,61 +69,86 @@ class Bot(Methods):
     on_chat_join_request = lambda self, filters=None: self.on_update('chat_join_request', filters)
 
     async def process_update(self, update: Update):
-        print(f"Received update: {update.to_json()}")
         for handler in self.handlers:
             try:
                 if handler.check(update):
                     await handler.handle(self, update)
             except SkipHandler:
-                print(f"Skipping rest of handler {handler}")
+                continue
             except Exception as e:
-                print(f"Error in handler {handler}: {e}")
+                logger.exception(f"Error in handler {handler}: {e}")
+
+    async def _process_update_thread(self, update: Dict[str, Any]):
+        try:
+            update_obj = Update.from_dict(update)
+            await self.process_update(update_obj)
+        except Exception as e:
+            logger.exception(f"Error processing update: {e}")
 
     async def start_polling(self):
         offset = 0
+        max_retries = 5
+        retry_delay = 5
+
         while True:
-            try:
-                updates = await self.get_updates(offset=offset, timeout=30)
-                for update in updates:
-                    update_obj = Update.from_dict(update)
-                    await self.process_update(update_obj)
-                    offset = update['update_id'] + 1
-            except aiohttp.ClientError as e:
-                print(f"Connection error while polling: {e}")
-                await asyncio.sleep(5)
-            except Exception as e:
-                print(f"Error while polling: {e}")
-                await asyncio.sleep(5)
+            for attempt in range(max_retries):
+                try:
+                    updates = await self.methods.get_updates(offset=offset, timeout=30)
+                    for update in updates:
+                        if isinstance(update, dict) and 'update_id' in update:
+                            await self._process_update_thread(update)
+                            offset = int(update['update_id']) + 1
+                        else:
+                            logger.warning(f"Received invalid update: {update}")
+                    break  # If successful, break the retry loop
+                except aiohttp.ClientError as e:
+                    logger.error(f"Connection error while polling (attempt {attempt + 1}/{max_retries}): {e}")
+                    if attempt < max_retries - 1:
+                        await asyncio.sleep(retry_delay)
+                    else:
+                        logger.error("Max retries reached. Restarting polling loop.")
+                        await asyncio.sleep(retry_delay * 2)
+                except Exception as e:
+                    logger.exception(f"Error while polling: {e}")
+                    await asyncio.sleep(retry_delay)
 
     async def initialize(self):
-        me_dict = await self.get_me()
-        self.me = User.from_dict(me_dict)
-        print(f"Bot initialized: @{self.me.username}")
-
-    def run(self, plugins_dir: str = None):
-        if plugins_dir:
-            self.load_plugins(plugins_dir)
-        loop = asyncio.get_event_loop()
+        if not self.token:
+            raise ValueError("Bot token not set. Please provide a valid token when initializing the Client.")
         try:
-            loop.run_until_complete(self.initialize())
-            loop.run_until_complete(self.start_polling())
-        except KeyboardInterrupt:
-            pass
-        finally:
-            loop.close()
+            me_dict = await self.methods.get_me()
+            self.me = User.from_dict(me_dict)
+            logger.info(f"Bot initialized: @{self.me.username}")
+        except Exception as e:
+            logger.exception(f"Error initializing bot: {e}")
+            raise
+
+    async def run(self):
+        try:
+            await self.initialize()
+            await self.start_polling()
+        except Exception as e:
+            logger.exception(f"Error running bot: {e}")
 
     def load_plugins(self, plugins_dir: str):
         if not os.path.exists(plugins_dir):
-            print(f"Warning: Plugins directory '{plugins_dir}' not found.")
+            logger.warning(f"Plugins directory '{plugins_dir}' not found.")
             return
 
-        for filename in os.listdir(plugins_dir):
-            if filename.endswith(".py") and not filename.startswith("__"):
-                module_name = filename[:-3]
-                module = importlib.import_module(f"{plugins_dir}.{module_name}")
-                for name, obj in module.__dict__.items():
-                    if callable(obj) and hasattr(obj, "_handler"):
-                        self.handlers.append(obj._handler)
+        for root, dirs, files in os.walk(plugins_dir):
+            for file in files:
+                if file.endswith(".py") and not file.startswith("__"):
+                    module_path = os.path.join(root, file)
+                    module_name = os.path.splitext(os.path.relpath(module_path, os.getcwd()))[0].replace(os.path.sep, '.')
+                    spec = importlib.util.spec_from_file_location(module_name, module_path)
+                    module = importlib.util.module_from_spec(spec)
+                    
+                    # Set the bot instance in the module's global namespace
+                    module.bot = self
+                    module.get_file = self.methods.get_file_path
+                    
+                    spec.loader.exec_module(module)
+                    logger.info(f"Loaded plugin: {module_name}")
 
 class Handler:
     def __init__(self, callback: Callable, filters=None, update_type=None):
@@ -135,4 +169,7 @@ class Handler:
 
 class BotException(Exception):
     pass
+
+# Create a global instance of the Client
+bot = Client()
 
