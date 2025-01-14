@@ -1,8 +1,7 @@
-from .bot import Bot
+from .bot import bot, Client
 from . import filters
 from .types import Update, Message, CallbackQuery
+from .methods import methods
 
-bot = Bot()
-
-__all__ = ["bot", "Bot", "filters", "Update", "Message", "CallbackQuery"]
+__all__ = ["bot", "Client", "filters", "Update", "Message", "CallbackQuery", "methods"]
 
