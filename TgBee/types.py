@@ -1,11 +1,11 @@
 from typing import Optional, Dict, Any, List, Union
 from dataclasses import dataclass, field
 import json
-from .methods import Methods
 
 class JSONSerializable:
     def to_json(self):
-        return json.dumps(self, default=lambda o: {k: v for k, v in o.__dict__.items() if v is not None}, ensure_ascii=False, indent=2)
+        return json.dumps(self, default=lambda o: {k: v for k, v in o.__dict__.items() if v is not None}, 
+                          ensure_ascii=False, indent=2)
 
 @dataclass
 class User(JSONSerializable):
@@ -39,86 +39,6 @@ class Chat(JSONSerializable):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
-
-    async def add_members(self, user_ids: Union[int, List[int]], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().add_chat_members(self.id, user_ids, **kwargs)
-
-    async def archive(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().archive_chat(self.id, **kwargs)
-
-    async def ban_member(self, user_id: int, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().ban_chat_member(self.id, user_id, **kwargs)
-
-    async def bind(self, **kwargs):
-        # Implement bind logic here
-        pass
-
-    async def default(self, **kwargs):
-        # Implement default logic here
-        pass
-
-    async def export_invite_link(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().export_chat_invite_link(self.id, **kwargs)
-
-    async def get_member(self, user_id: int, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().get_chat_member(self.id, user_id, **kwargs)
-
-    async def get_members(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().get_chat_members(self.id, **kwargs)
-
-    async def join(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().join_chat(self.id, **kwargs)
-
-    async def leave(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().leave_chat(self.id, **kwargs)
-
-    async def mark_unread(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().mark_chat_unread(self.id, **kwargs)
-
-    async def promote_member(self, user_id: int, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().promote_chat_member(self.id, user_id, **kwargs)
-
-    async def restrict_member(self, user_id: int, permissions: Dict[str, bool], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().restrict_chat_member(self.id, user_id, permissions, **kwargs)
-
-    async def set_description(self, description: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().set_chat_description(self.id, description, **kwargs)
-
-    async def set_photo(self, photo: Union[str, bytes], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().set_chat_photo(self.id, photo, **kwargs)
-
-    async def set_protected_content(self, protected: bool, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().set_chat_protected_content(self.id, protected, **kwargs)
-
-    async def set_title(self, title: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().set_chat_title(self.id, title, **kwargs)
-
-    async def unarchive(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().unarchive_chat(self.id, **kwargs)
-
-    async def unban_member(self, user_id: int, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().unban_chat_member(self.id, user_id, **kwargs)
-
-    async def unpin_all_messages(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().unpin_all_chat_messages(self.id, **kwargs)
 
 @dataclass
 class PhotoSize(JSONSerializable):
@@ -173,177 +93,37 @@ class Message(JSONSerializable):
             data['photo'] = [PhotoSize.from_dict(photo) for photo in data['photo']]
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
 
-    async def bind(self, **kwargs):
-        # Implement bind logic here
-        pass
-
-    async def click(self, **kwargs):
-        # Implement click logic here
-        pass
-
-    async def continue_propagation(self, **kwargs):
-        # Implement continue_propagation logic here
-        pass
-
-    async def copy(self, chat_id: Union[int, str], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().copy_message(chat_id, self.chat.id, self.message_id, **kwargs)
-
-    async def default(self, **kwargs):
-        # Implement default logic here
-        pass
-
-    async def delete(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().delete_message(self.chat.id, self.message_id, **kwargs)
-
-    async def download(self, file_name: str = None, **kwargs):
-        if self.document:
-            file_id = self.document['file_id']
-        elif self.photo:
-            file_id = self.photo[-1].file_id
-        elif self.audio:
-            file_id = self.audio['file_id']
-        elif self.video:
-            file_id = self.video['file_id']
-        else:
-            raise ValueError("No downloadable content in this message")
-
-        file_info = await Methods.get_current().get_file(file_id)
-        from .bot import Bot
-        return await Bot.get_current().download_file(file_info['file_path'], file_name, **kwargs)
-
-    async def edit(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_text(chat_id=self.chat.id, message_id=self.message_id, **kwargs)
-
-    async def edit_caption(self, caption: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_caption(chat_id=self.chat.id, message_id=self.message_id, caption=caption, **kwargs)
-
-    async def edit_media(self, media: Dict[str, Any], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_media(chat_id=self.chat.id, message_id=self.message_id, media=media, **kwargs)
-
-    async def edit_reply_markup(self, reply_markup: Dict[str, Any], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_reply_markup(chat_id=self.chat.id, message_id=self.message_id, reply_markup=reply_markup, **kwargs)
-
-    async def edit_text(self, text: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_text(chat_id=self.chat.id, message_id=self.message_id, text=text, **kwargs)
-
-    async def forward(self, chat_id: Union[int, str], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().forward_message(chat_id, self.chat.id, self.message_id, **kwargs)
-
-    async def get_media_group(self, **kwargs):
-        # Implement get_media_group logic here
-        pass
-
-    async def link(self, **kwargs):
-        # Implement link logic here
-        pass
-
-    async def pin(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().pin_chat_message(self.chat.id, self.message_id, **kwargs)
-
-    async def react(self, emoji: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().set_message_reaction(self.chat.id, self.message_id, [emoji], **kwargs)
-
-    async def reply(self, text: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_message(self.chat.id, text, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_animation(self, animation: Union[str, bytes], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_animation(self.chat.id, animation, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_audio(self, audio: Union[str, bytes], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_audio(self.chat.id, audio, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_cached_media(self, file_id: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_cached_media(self.chat.id, file_id, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_chat_action(self, action: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_chat_action(self.chat.id, action, **kwargs)
-
-    async def reply_contact(self, phone_number: str, first_name: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_contact(self.chat.id, phone_number, first_name, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_document(self, document: Union[str, bytes], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_document(self.chat.id, document, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_game(self, game_short_name: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_game(self.chat.id, game_short_name, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_inline_bot_result(self, inline_message_id: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_inline_bot_result(self.chat.id, inline_message_id, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_location(self, latitude: float, longitude: float, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_location(self.chat.id, latitude, longitude, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_media_group(self, media: List[Dict[str, Any]], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_media_group(self.chat.id, media, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_photo(self, photo: Union[str, bytes], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_photo(self.chat.id, photo, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_poll(self, question: str, options: List[str], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_poll(self.chat.id, question, options, reply_to_message_id=self.message_id, **kwargs)
-
-    async def reply_sticker(self, sticker: Union[str, bytes], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().send_sticker(self.chat.id, sticker, reply_to_message_id=self.message_id, **kwargs)
-
     async def reply_text(self, text: str, **kwargs):
         from .bot import Bot
-        return await Bot.get_current().send_message(self.chat.id, text, reply_to_message_id=self.message_id, **kwargs)
+        return await Bot.get_current().send_message(chat_id=self.chat.id, text=text, reply_to_message_id=self.message_id, **kwargs)
 
-    async def reply_venue(self, latitude: float, longitude: float, title: str, address: str, **kwargs):
+    async def reply_photo(self, photo: str, **kwargs):
         from .bot import Bot
-        return await Bot.get_current().send_venue(self.chat.id, latitude, longitude, title, address, reply_to_message_id=self.message_id, **kwargs)
+        return await Bot.get_current().send_photo(chat_id=self.chat.id, photo=photo, reply_to_message_id=self.message_id, **kwargs)
 
-    async def reply_video(self, video: Union[str, bytes], **kwargs):
+    async def reply_audio(self, audio: str, **kwargs):
         from .bot import Bot
-        return await Bot.get_current().send_video(self.chat.id, video, reply_to_message_id=self.message_id, **kwargs)
+        return await Bot.get_current().send_audio(chat_id=self.chat.id, audio=audio, reply_to_message_id=self.message_id, **kwargs)
 
-    async def reply_video_note(self, video_note: Union[str, bytes], **kwargs):
+    async def reply_document(self, document: str, **kwargs):
         from .bot import Bot
-        return await Bot.get_current().send_video_note(self.chat.id, video_note, reply_to_message_id=self.message_id, **kwargs)
+        return await Bot.get_current().send_document(chat_id=self.chat.id, document=document, reply_to_message_id=self.message_id, **kwargs)
 
-    async def reply_voice(self, voice: Union[str, bytes], **kwargs):
+    async def reply_video(self, video: str, **kwargs):
         from .bot import Bot
-        return await Bot.get_current().send_voice(self.chat.id, voice, reply_to_message_id=self.message_id, **kwargs)
+        return await Bot.get_current().send_video(chat_id=self.chat.id, video=video, reply_to_message_id=self.message_id, **kwargs)
 
-    async def retract_vote(self, **kwargs):
-        # Implement retract_vote logic here
-        pass
-
-    async def stop_propagation(self, **kwargs):
-        # Implement stop_propagation logic here
-        pass
-
-    async def unpin(self, **kwargs):
+    async def reply_animation(self, animation: str, **kwargs):
         from .bot import Bot
-        return await Bot.get_current().unpin_chat_message(self.chat.id, self.message_id, **kwargs)
+        return await Bot.get_current().send_animation(chat_id=self.chat.id, animation=animation, reply_to_message_id=self.message_id, **kwargs)
 
-    async def vote(self, option: int, **kwargs):
+    async def reply_voice(self, voice: str, **kwargs):
         from .bot import Bot
-        return await Bot.get_current().vote_poll(self.chat.id, self.message_id, option, **kwargs)
+        return await Bot.get_current().send_voice(chat_id=self.chat.id, voice=voice, reply_to_message_id=self.message_id, **kwargs)
+
+    async def reply_video_note(self, video_note: str, **kwargs):
+        from .bot import Bot
+        return await Bot.get_current().send_video_note(chat_id=self.chat.id, video_note=video_note, reply_to_message_id=self.message_id, **kwargs)
 
 @dataclass
 class CallbackQuery(JSONSerializable):
@@ -361,41 +141,9 @@ class CallbackQuery(JSONSerializable):
             data['message'] = Message.from_dict(data['message'])
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
 
-    async def answer(self, text: Optional[str] = None, show_alert: bool = False, **kwargs):
+    async def answer(self, text: str = None, show_alert: bool = False, **kwargs):
         from .bot import Bot
         return await Bot.get_current().answer_callback_query(self.id, text=text, show_alert=show_alert, **kwargs)
-
-    async def bind(self, **kwargs):
-        # Implement bind logic here
-        pass
-
-    async def continue_propagation(self, **kwargs):
-        # Implement continue_propagation logic here
-        pass
-
-    async def default(self, **kwargs):
-        # Implement default logic here
-        pass
-
-    async def edit_message_caption(self, caption: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_caption(chat_id=self.message.chat.id, message_id=self.message.message_id, caption=caption, **kwargs)
-
-    async def edit_message_media(self, media: Dict[str, Any], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_media(chat_id=self.message.chat.id, message_id=self.message.message_id, media=media, **kwargs)
-
-    async def edit_message_reply_markup(self, reply_markup: Dict[str, Any], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_reply_markup(chat_id=self.message.chat.id, message_id=self.message.message_id, reply_markup=reply_markup, **kwargs)
-
-    async def edit_message_text(self, text: str, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().edit_message_text(chat_id=self.message.chat.id, message_id=self.message.message_id, text=text, **kwargs)
-
-    async def stop_propagation(self, **kwargs):
-        # Implement stop_propagation logic here
-        pass
 
 @dataclass
 class InlineQuery(JSONSerializable):
@@ -411,10 +159,6 @@ class InlineQuery(JSONSerializable):
         if 'from' in data:
             data['from_user'] = User.from_dict(data.pop('from'))
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
-
-    async def answer(self, results: List[Dict[str, Any]], **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().answer_inline_query(self.id, results, **kwargs)
 
 @dataclass
 class ChosenInlineResult(JSONSerializable):
@@ -443,10 +187,6 @@ class ShippingQuery(JSONSerializable):
             data['from_user'] = User.from_dict(data.pop('from'))
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
 
-    async def answer(self, ok: bool, shipping_options: Optional[List[Dict[str, Any]]] = None, error_message: Optional[str] = None):
-        from .bot import Bot
-        return await Bot.get_current().answer_shipping_query(self.id, ok, shipping_options, error_message)
-
 @dataclass
 class PreCheckoutQuery(JSONSerializable):
     id: str
@@ -462,10 +202,6 @@ class PreCheckoutQuery(JSONSerializable):
         if 'from' in data:
             data['from_user'] = User.from_dict(data.pop('from'))
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
-
-    async def answer(self, ok: bool, error_message: Optional[str] = None):
-        from .bot import Bot
-        return await Bot.get_current().answer_pre_checkout_query(self.id, ok, error_message)
 
 @dataclass
 class Poll(JSONSerializable):
@@ -531,14 +267,6 @@ class ChatJoinRequest(JSONSerializable):
         if 'from' in data:
             data['from_user'] = User.from_dict(data.pop('from'))
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
-
-    async def approve(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().approve_chat_join_request(self.chat.id, self.from_user.id, **kwargs)
-
-    async def decline(self, **kwargs):
-        from .bot import Bot
-        return await Bot.get_current().decline_chat_join_request(self.chat.id, self.from_user.id, **kwargs)
 
 @dataclass
 class Update(JSONSerializable):
