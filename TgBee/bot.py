@@ -18,16 +18,17 @@ class Client:
             cls._instance.initialized = False
         return cls._instance
 
-    def __init__(self, token: str, plugins_dir: str = None):
+    def __init__(self, token: str = None, plugins_dir: str = None):
         self.token = token
         self.plugins_dir = plugins_dir
         self.handlers = []
         self.session = None
         self.me = None
         self.methods = Methods()
-        self.methods.set_token(token)
-        if self.plugins_dir:
-            self.load_plugins(self.plugins_dir)
+        if token:
+            self.methods.set_token(token)
+        if plugins_dir:
+            self.load_plugins(plugins_dir)
 
     @classmethod
     def get_current(cls):
