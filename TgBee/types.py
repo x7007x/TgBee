@@ -38,7 +38,11 @@ class User(JSONSerializable):
 
     @property
     def mention(self):
-        return f'<a href="tg://user?id={self.id}">{self.first_name}</a>'
+        def HTML(self):
+            return f'<a href="tg://user?id={self.id}">{self.first_name}</a>'
+        def MARKDOWN(self):
+            return f'[{self.id}]({self.first_name})'
+        return self.first_name
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
@@ -68,14 +72,6 @@ class Chat(JSONSerializable):
     async def ban_member(self, user_id: int, **kwargs):
         from .methods import Methods
         return await Methods.get_current().ban_chat_member(self.id, user_id, **kwargs)
-
-    async def bind(self, **kwargs):
-        # Implement bind logic here
-        pass
-
-    async def default(self, **kwargs):
-        # Implement default logic here
-        pass
 
     async def export_invite_link(self, **kwargs):
         from .methods import Methods
@@ -188,25 +184,9 @@ class Message(JSONSerializable):
             data['left_chat_member'] = User.from_dict(data['left_chat_member'])
         return cls(**{k: v for k, v in data.items() if k in cls.__annotations__})
 
-    async def bind(self, **kwargs):
-        # Implement bind logic here
-        pass
-
-    async def click(self, **kwargs):
-        # Implement click logic here
-        pass
-
-    async def continue_propagation(self, **kwargs):
-        # Implement continue_propagation logic here
-        pass
-
     async def copy(self, chat_id: Union[int, str], **kwargs):
         from .methods import Methods
         return await Methods.get_current().copy_message(chat_id, self.chat.id, self.message_id, **kwargs)
-
-    async def default(self, **kwargs):
-        # Implement default logic here
-        pass
 
     async def delete(self, **kwargs):
         from .methods import Methods
@@ -251,14 +231,6 @@ class Message(JSONSerializable):
     async def forward(self, chat_id: Union[int, str], **kwargs):
         from .methods import Methods
         return await Methods.get_current().forward_message(chat_id, self.chat.id, self.message_id, **kwargs)
-
-    async def get_media_group(self, **kwargs):
-        # Implement get_media_group logic here
-        pass
-
-    async def link(self, **kwargs):
-        # Implement link logic here
-        pass
 
     async def pin(self, **kwargs):
         from .methods import Methods
@@ -345,14 +317,6 @@ class Message(JSONSerializable):
         from .methods import Methods
         return await Methods.get_current().send_voice(self.chat.id, voice, reply_to_message_id=self.message_id, **kwargs)
 
-    async def retract_vote(self, **kwargs):
-        # Implement retract_vote logic here
-        pass
-
-    async def stop_propagation(self, **kwargs):
-        # Implement stop_propagation logic here
-        pass
-
     async def unpin(self, **kwargs):
         from .methods import Methods
         return await Methods.get_current().unpin_chat_message(self.chat.id, self.message_id, **kwargs)
@@ -387,18 +351,6 @@ class CallbackQuery(JSONSerializable):
         from .methods import Methods
         return await Methods.get_current().answer_callback_query(self.id, text=text, show_alert=show_alert, **kwargs)
 
-    async def bind(self, **kwargs):
-        # Implement bind logic here
-        pass
-
-    async def continue_propagation(self, **kwargs):
-        # Implement continue_propagation logic here
-        pass
-
-    async def default(self, **kwargs):
-        # Implement default logic here
-        pass
-
     async def edit_message_caption(self, caption: str, **kwargs):
         from .methods import Methods
         return await Methods.get_current().edit_message_caption(chat_id=self.message.chat.id, message_id=self.message.message_id, caption=caption, **kwargs)
@@ -414,10 +366,6 @@ class CallbackQuery(JSONSerializable):
     async def edit_message_text(self, text: str, **kwargs):
         from .methods import Methods
         return await Methods.get_current().edit_message_text(chat_id=self.message.chat.id, message_id=self.message.message_id, text=text, **kwargs)
-
-    async def stop_propagation(self, **kwargs):
-        # Implement stop_propagation logic here
-        pass
 
 @dataclass
 class InlineQuery(JSONSerializable):
