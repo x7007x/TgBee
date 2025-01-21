@@ -9,9 +9,6 @@ from .methods import Methods
 
 logger = logging.getLogger(__name__)
 
-class SkipHandler(Exception):
-    pass
-
 class Client:
     _instance = None
 
@@ -21,15 +18,14 @@ class Client:
             cls._instance.initialized = False
         return cls._instance
 
-    def __init__(self, token: str = None, plugins_dir: str = None):
+    def __init__(self, token: str, plugins_dir: str = None):
         self.token = token
         self.plugins_dir = plugins_dir
         self.handlers = []
         self.session = None
         self.me = None
         self.methods = Methods()
-        if self.token:
-            self.methods.set_token(self.token)
+        self.methods.set_token(token)
         if self.plugins_dir:
             self.load_plugins(self.plugins_dir)
 
@@ -73,8 +69,6 @@ class Client:
             try:
                 if handler.check(update):
                     await handler.handle(self, update)
-            except SkipHandler:
-                continue
             except Exception as e:
                 logger.exception(f"Error in handler {handler}: {e}")
 
@@ -167,9 +161,4 @@ class Handler:
     async def handle(self, bot, update: Update):
         await self.callback(bot, getattr(update, self.update_type))
 
-class BotException(Exception):
-    pass
-
-# Create a global instance of the Client
 bot = Client()
-
