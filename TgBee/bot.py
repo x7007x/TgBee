@@ -25,10 +25,16 @@ class Client:
         self.session = None
         self.me = None
         self.methods = Methods()
-        if token:
-            self.methods.set_token(token)
-        if plugins_dir:
-            self.load_plugins(plugins_dir)
+        if self.token:
+            self.set_token(self.token)
+        if self.plugins_dir:
+            self.load_plugins(self.plugins_dir)
+        self.initialized = True
+
+    def set_token(self, token: str):
+        self.token = token
+        self.methods.set_token(token)
+        logger.info("Bot token set successfully")
 
     @classmethod
     def get_current(cls):
