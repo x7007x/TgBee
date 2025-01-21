@@ -26,8 +26,14 @@ class Methods:
         self.main_script_path = path
 
     async def _make_request(self, method: str, data: Dict[str, Any] = None, files: Dict[str, Any] = None) -> Dict[str, Any]:
-        #if not self.base_url:
-            #raise ValueError("Bot token not set. Call set_token() first.")
+        if not self.base_url:
+            raise ValueError("Bot token not set")
+        
+        url = self.base_url + method
+        if not url.startswith("https://"):
+            raise ValueError(f"Invalid base URL: {self.base_url}")
+
+        logger.debug(f"Making request. Method: {method}, URL: {url}")
         
         async with aiohttp.ClientSession() as session:
             if files:
