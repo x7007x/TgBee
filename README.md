@@ -22,7 +22,6 @@ pip3 install -U TgBee
 ```python
 import asyncio
 from TgBee import Client, filters
-from pytelebot.bot import SkipHandler
 
 bot = Client(token="YOUR_BOT_TOKEN")
 
