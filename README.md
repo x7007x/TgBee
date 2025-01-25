@@ -2,9 +2,11 @@
 
 TgBee is an asynchronous Python wrapper for the Telegram Bot API. It provides a simple and intuitive interface for creating Telegram bots using modern Python features.
 
-![PyPI](https://img.shields.io/pypi/v/tgbee?style=flat-square)
-[![Telegram](https://img.shields.io/badge/Telegram-Join-blue?style=flat-square)](https://t.me/YourTelegramLink)
+![PyPI](https://img.shields.io/pypi/v/TgBee?style=flat-square)
+[![Telegram](https://img.shields.io/badge/Telegram-Join-blue?style=flat-square)](https://t.me/i88y8)
 
+Don't forget to ⭐ the repository on [GitHub](https://github.com/username/tgbee)!
+[![GitHub Stars](https://img.shields.io/github/stars/username/repository?style=social)](https://github.com/username/repository/stargazers)
 ## Features
 
 - Asynchronous API calls using `aiohttp`
