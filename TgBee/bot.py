@@ -19,6 +19,7 @@ class Client:
         return cls._instance
 
     def __init__(self, token: str = None, plugins_dir: str = None):
+        global token
         self.token = token
         self.plugins_dir = plugins_dir
         self.handlers = []
