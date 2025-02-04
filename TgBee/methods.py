@@ -347,6 +347,9 @@ class Methods:
     async def answer_pre_checkout_query(self, pre_checkout_query_id: str, ok: bool, **kwargs) -> bool:
         return await self.call("answerPreCheckoutQuery", pre_checkout_query_id=pre_checkout_query_id, ok=ok, **kwargs)
 
+    async def refund_star_payment(self, user_id: int, telegram_payment_charge_id: str, **kwargs) -> bool:
+        return await self.call("refundStarPayment", user_id=user_id, telegram_payment_charge_id=telegram_payment_charge_id, **kwargs)
+
     # Telegram Passport
     async def set_passport_data_errors(self, user_id: int, errors: List[Dict[str, Any]]) -> bool:
         return await self.call("setPassportDataErrors", user_id=user_id, errors=errors)
@@ -392,4 +395,3 @@ class Methods:
         return methods
 
 methods = Methods()
-
